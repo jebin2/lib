@@ -62,11 +62,12 @@ class HFDatasetClient:
 	# --------------------------
 	#	   UPLOAD FOLDER
 	# --------------------------
-	def upload_folder(self, local_folder: str, repo_base_path: str = "") -> bool:
+	def upload_folder(self, local_folder: str, repo_base_path: str = "", ignore_patterns=None) -> bool:
 		"""
 		Upload all files inside a folder (recursive).
 		local_folder: The local folder path to upload.
 		repo_base_path: Base path inside the repo (e.g., "videos")
+		ignore_patterns: List of patterns to ignore (e.g., ["*.txt", "temp/*"])
 		"""
 		if not os.path.isdir(local_folder):
 			PrintLogger.error(f"Folder not found: {local_folder}")
@@ -75,6 +76,15 @@ class HFDatasetClient:
 		PrintLogger.info(f"Uploading folder: {local_folder}")
 
 		try:
+			# Default patterns
+			default_ignore = [".git/*", ".DS_Store", ".*"]
+
+			# Merge with user-provided patterns
+			if ignore_patterns:
+				all_ignore_patterns = default_ignore + ignore_patterns
+			else:
+				all_ignore_patterns = default_ignore
+
 			# Use HfApi's upload_folder method for better performance
 			self.api.upload_folder(
 				folder_path=local_folder,
@@ -83,12 +93,11 @@ class HFDatasetClient:
 				repo_type=self.repo_type,
 				revision=self.branch,
 				commit_message=f"Upload folder: {local_folder}",
-				ignore_patterns=[".git/*", ".DS_Store", ".*"]  # Ignore hidden files
+				ignore_patterns=all_ignore_patterns
 			)
-			
+
 			PrintLogger.success("Folder upload completed!")
 			return True
-
 		except Exception as e:
 			PrintLogger.error(f"Upload folder failed: {e}")
 			return False
