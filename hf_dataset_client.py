@@ -133,8 +133,7 @@ class HFDatasetClient:
 				repo_type=self.repo_type,
 				revision=self.branch,
 				token=self.token,
-				local_dir=os.path.dirname(local_path),  # Download directly to target
-				local_dir_use_symlinks=False  # Disable symlinks
+				local_dir=os.path.dirname(local_path)
 			)
 			
 			# If filename differs, rename it
