@@ -54,8 +54,10 @@ class HFDatasetClient:
 				commit_message=f"Upload media"
 			)
 			PrintLogger.success(f"Uploaded: {repo_path}")
+			return True
 		except Exception as e:
 			PrintLogger.error(f"Upload failed: {e}")
+		return False
 
 	# --------------------------
 	#		LIST
@@ -105,8 +107,10 @@ class HFDatasetClient:
 			shutil.move(tmp_path, local_path)
 
 			PrintLogger.success(f"Downloaded to: {local_path}")
+			return True
 		except Exception as e:
 			PrintLogger.error(f"Download failed: {e}")
+		return False
 
 	# --------------------------
 	#		DELETE
@@ -122,8 +126,10 @@ class HFDatasetClient:
 				revision=self.branch,
 			)
 			PrintLogger.success(f"Deleted: {repo_path}")
+			return True
 		except Exception as e:
 			PrintLogger.error(f"Delete failed: {e}")
+		return False
 
 
 # -------------------------------------------------------
