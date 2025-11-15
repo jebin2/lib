@@ -75,28 +75,17 @@ class HFDatasetClient:
 		PrintLogger.info(f"Uploading folder: {local_folder}")
 
 		try:
-			for root, dirs, files in os.walk(local_folder):
-				for file in files:
-					# Skip hidden files like .DS_Store, .gitkeep, etc.
-					if file.startswith("."):
-						continue
-
-					local_path = os.path.join(root, file)
-
-					# Compute relative path inside repo
-					rel_path = os.path.relpath(local_path, local_folder)
-
-					# Target path inside repo
-					repo_path = os.path.join(repo_base_path, rel_path).replace("\\", "/")
-
-					PrintLogger.info(f"Uploading file: {local_path} → {repo_path}")
-
-					ok = self.upload(local_path, repo_path)
-
-					if not ok:
-						PrintLogger.error(f"Failed uploading: {local_path}")
-						return False
-
+			# Use HfApi's upload_folder method for better performance
+			self.api.upload_folder(
+				folder_path=local_folder,
+				path_in_repo=repo_base_path,
+				repo_id=self.repo_id,
+				repo_type=self.repo_type,
+				revision=self.branch,
+				commit_message=f"Upload folder: {local_folder}",
+				ignore_patterns=[".git/*", ".DS_Store", ".*"]  # Ignore hidden files
+			)
+			
 			PrintLogger.success("Folder upload completed!")
 			return True
 
@@ -136,19 +125,22 @@ class HFDatasetClient:
 	# --------------------------
 	def download(self, repo_path: str, local_path: str):
 		PrintLogger.info(f"Downloading {repo_path} → {local_path}")
-
 		try:
+			# Download with local_dir parameter (no cache)
 			tmp_path = hf_hub_download(
 				repo_id=self.repo_id,
 				filename=repo_path,
 				repo_type=self.repo_type,
 				revision=self.branch,
 				token=self.token,
+				local_dir=os.path.dirname(local_path),  # Download directly to target
+				local_dir_use_symlinks=False  # Disable symlinks
 			)
-
-			os.makedirs(os.path.dirname(local_path), exist_ok=True)
-			shutil.move(tmp_path, local_path)
-
+			
+			# If filename differs, rename it
+			if tmp_path != local_path:
+				shutil.move(tmp_path, local_path)
+			
 			PrintLogger.success(f"Downloaded to: {local_path}")
 			return True
 		except Exception as e:
