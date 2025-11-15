@@ -34,8 +34,7 @@ class HFDatasetClient:
         self.branch = "main"
 
         # init api
-        self.api = HfApi()
-        self.api.set_access_token(self.token)
+        self.api = HfApi(token=self.token)
 
         PrintLogger.info(f"HFMediaClient initialized using repo: {self.repo_id}")
 
