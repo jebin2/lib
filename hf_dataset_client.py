@@ -60,6 +60,51 @@ class HFDatasetClient:
 		return False
 
 	# --------------------------
+	#	   UPLOAD FOLDER
+	# --------------------------
+	def upload_folder(self, local_folder: str, repo_base_path: str = "") -> bool:
+		"""
+		Upload all files inside a folder (recursive).
+		local_folder: The local folder path to upload.
+		repo_base_path: Base path inside the repo (e.g., "videos")
+		"""
+		if not os.path.isdir(local_folder):
+			PrintLogger.error(f"Folder not found: {local_folder}")
+			return False
+
+		PrintLogger.info(f"Uploading folder: {local_folder}")
+
+		try:
+			for root, dirs, files in os.walk(local_folder):
+				for file in files:
+					# Skip hidden files like .DS_Store, .gitkeep, etc.
+					if file.startswith("."):
+						continue
+
+					local_path = os.path.join(root, file)
+
+					# Compute relative path inside repo
+					rel_path = os.path.relpath(local_path, local_folder)
+
+					# Target path inside repo
+					repo_path = os.path.join(repo_base_path, rel_path).replace("\\", "/")
+
+					PrintLogger.info(f"Uploading file: {local_path} → {repo_path}")
+
+					ok = self.upload(local_path, repo_path)
+
+					if not ok:
+						PrintLogger.error(f"Failed uploading: {local_path}")
+						return False
+
+			PrintLogger.success("Folder upload completed!")
+			return True
+
+		except Exception as e:
+			PrintLogger.error(f"Upload folder failed: {e}")
+			return False
+
+	# --------------------------
 	#		LIST
 	# --------------------------
 	def list_files(self):
@@ -78,8 +123,6 @@ class HFDatasetClient:
 			files = [item.rfilename for item in info.siblings]
 
 			PrintLogger.success(f"Found {len(files)} files:")
-			for f in files:
-				print(" -", f)
 
 			return files
 
