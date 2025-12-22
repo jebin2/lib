@@ -1,6 +1,0 @@
-opencv-python
-git+https://github.com/huggingface/transformers.git
-pillow
-tensorflow
-torch
-tf-keras

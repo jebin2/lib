@@ -173,18 +173,3 @@ class HFDatasetClient:
 		except Exception as e:
 			PrintLogger.error(f"Delete failed: {e}")
 		return False
-
-
-# -------------------------------------------------------
-# Example usage
-# -------------------------------------------------------
-if __name__ == "__main__":
-	try:
-		client = HFDatasetClient()
-	except ValueError as err:
-		PrintLogger.error(err)
-		exit(1)
-
-	# client.upload("local.mp4", "videos/local.mp4")
-	# client.download("videos/local.mp4", "downloads/video.mp4")
-	# client.delete("videos/local.mp4")

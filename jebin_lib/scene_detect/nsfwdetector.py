@@ -129,15 +129,6 @@ class SimpleNSFWDetector:
                             nsfw_segments.append((first_true_start_time, last_true_start_time))
                             self.extract_segments(video_path, [(first_true_start_time, last_true_start_time)], output_folder)
                             print(f"  → Finished segment: {first_true_start_time:.1f}s - {last_true_start_time:.1f}s")
-        
-        # Extract clips from segments
-        # if nsfw_segments:
-        #     print(f"\nFound {len(nsfw_segments)} NSFW segments:")
-        #     for i, (start, end) in enumerate(nsfw_segments):
-        #         print(f"  Segment {i+1}: {start:.1f}s - {end:.1f}s ({end-start:.1f}s)")
-        #     self.extract_segments(video_path, nsfw_segments, output_folder)
-        # else:
-        #     print("No NSFW segments found")
     
     def extract_segments(self, video_path, segments, output_folder):
         """Extract video clips for each segment"""
@@ -154,16 +145,3 @@ class SimpleNSFWDetector:
                 print(f"Saved clip: {os.path.basename(output_path)}")
             else:
                 print(f"Failed to extract segment {i+1}")
-
-# Usage
-if __name__ == "__main__":
-    detector = SimpleNSFWDetector(threshold=0.6)
-    
-    # Process single video
-    video_path = "Blue is the Warmest Color 2013.mkv"
-    detector.process_video(
-        video_path, 
-        output_folder="nsfw_clips", 
-        check_interval=1,       # Check every 1 second
-        max_gap_seconds=10      # Max 10 second gap within same segment
-    )
