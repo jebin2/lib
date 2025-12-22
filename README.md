@@ -7,18 +7,18 @@ A collection of utility modules for my projects.
 ### From Git (recommended)
 ```bash
 # Basic install (HuggingFace dataset client only)
-pip install git+https://github.com/jebin/lib.git
+pip install git+https://github.com/jebin2/lib.git
 
 # With scene detection support
-pip install "git+https://github.com/jebin/lib.git#egg=jebin-lib[scene_detect]"
+pip install "git+https://github.com/jebin2/lib.git#egg=jebin-lib[scene_detect]"
 
 # All optional dependencies
-pip install "git+https://github.com/jebin/lib.git#egg=jebin-lib[all]"
+pip install "git+https://github.com/jebin2/lib.git#egg=jebin-lib[all]"
 ```
 
 ### For development
 ```bash
-git clone https://github.com/jebin/lib.git
+git clone https://github.com/jebin2/lib.git
 cd lib
 pip install -e .
 ```
