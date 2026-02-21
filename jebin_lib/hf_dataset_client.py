@@ -18,10 +18,10 @@ class PrintLogger:
 
 
 class HFDatasetClient:
-	def __init__(self):
+	def __init__(self, token=None, repo_id=None):
 		# --- Strict env checks ---
-		self.token = os.getenv("HF_TOKEN")
-		self.repo_id = os.getenv("HF_REPO_ID")
+		self.token = os.getenv("HF_TOKEN") if not token else token
+		self.repo_id = os.getenv("HF_REPO_ID") if not repo_id else repo_id
 
 		if not self.token:
 			raise ValueError("Environment variable HF_TOKEN is not set.")
