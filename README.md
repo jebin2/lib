@@ -49,7 +49,7 @@ detector.process_video("video.mp4", output_folder="nsfw_clips")
 
 - **jebin_lib** - Main package
   - `HFDatasetClient` - Upload/download files to HuggingFace datasets
-  - `PrintLogger` - Simple logging utility
+  - `load_env` - `.env` file loader
   
 - **jebin_lib.scene_detect** - Scene detection tools
   - `SimpleNSFWDetector` - NSFW content detection in videos

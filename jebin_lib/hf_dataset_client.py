@@ -1,21 +1,7 @@
 import os
 import shutil
 from huggingface_hub import HfApi, hf_hub_download
-
-
-class PrintLogger:
-	@staticmethod
-	def info(msg):
-		print(f"[INFO] {msg}")
-
-	@staticmethod
-	def success(msg):
-		print(f"[SUCCESS] {msg}")
-
-	@staticmethod
-	def error(msg):
-		print(f"[ERROR] {msg}")
-
+from custom_logger import logger_config
 
 class HFDatasetClient:
 	def __init__(self, token=None, repo_id=None):
@@ -36,13 +22,13 @@ class HFDatasetClient:
 		# init api
 		self.api = HfApi(token=self.token)
 
-		PrintLogger.info(f"HFMediaClient initialized using repo: {self.repo_id}")
+		logger_config.info(f"HFMediaClient initialized using repo: {self.repo_id}")
 
 	# --------------------------
 	#		UPLOAD
 	# --------------------------
 	def upload(self, local_path: str, repo_path: str):
-		PrintLogger.info(f"Uploading {local_path} → {repo_path}")
+		logger_config.info(f"Uploading {local_path} → {repo_path}")
 
 		try:
 			self.api.upload_file(
@@ -53,10 +39,10 @@ class HFDatasetClient:
 				revision=self.branch,
 				commit_message=f"Upload media"
 			)
-			PrintLogger.success(f"Uploaded: {repo_path}")
+			logger_config.success(f"Uploaded: {repo_path}")
 			return True
 		except Exception as e:
-			PrintLogger.error(f"Upload failed: {e}")
+			logger_config.error(f"Upload failed: {e}")
 		return False
 
 	# --------------------------
@@ -70,10 +56,10 @@ class HFDatasetClient:
 		ignore_patterns: List of patterns to ignore (e.g., ["*.txt", "temp/*"])
 		"""
 		if not os.path.isdir(local_folder):
-			PrintLogger.error(f"Folder not found: {local_folder}")
+			logger_config.error(f"Folder not found: {local_folder}")
 			return False
 
-		PrintLogger.info(f"Uploading folder: {local_folder}")
+		logger_config.info(f"Uploading folder: {local_folder}")
 
 		try:
 			# Default patterns
@@ -96,10 +82,10 @@ class HFDatasetClient:
 				ignore_patterns=all_ignore_patterns
 			)
 
-			PrintLogger.success("Folder upload completed!")
+			logger_config.success("Folder upload completed!")
 			return True
 		except Exception as e:
-			PrintLogger.error(f"Upload folder failed: {e}")
+			logger_config.error(f"Upload folder failed: {e}")
 			return False
 
 	# --------------------------
@@ -109,7 +95,7 @@ class HFDatasetClient:
 		"""
 		List all files in the Hugging Face dataset repo.
 		"""
-		PrintLogger.info("Fetching file list...")
+		logger_config.info("Fetching file list...")
 
 		try:
 			info = self.api.dataset_info(
@@ -120,12 +106,12 @@ class HFDatasetClient:
 
 			files = [item.rfilename for item in info.siblings]
 
-			PrintLogger.success(f"Found {len(files)} files:")
+			logger_config.success(f"Found {len(files)} files:")
 
 			return files
 
 		except Exception as e:
-			PrintLogger.error(f"Failed to list files: {e}")
+			logger_config.error(f"Failed to list files: {e}")
 			return []
 
 
@@ -133,7 +119,7 @@ class HFDatasetClient:
 	#		DOWNLOAD
 	# --------------------------
 	def download(self, repo_path: str, local_path: str):
-		PrintLogger.info(f"Downloading {repo_path} → {local_path}")
+		logger_config.info(f"Downloading {repo_path} → {local_path}")
 		try:
 			# Download with local_dir parameter (no cache)
 			tmp_path = hf_hub_download(
@@ -149,17 +135,17 @@ class HFDatasetClient:
 			if tmp_path != local_path:
 				shutil.move(tmp_path, local_path)
 			
-			PrintLogger.success(f"Downloaded to: {local_path}")
+			logger_config.success(f"Downloaded to: {local_path}")
 			return True
 		except Exception as e:
-			PrintLogger.error(f"Download failed: {e}")
+			logger_config.error(f"Download failed: {e}")
 		return False
 
 	# --------------------------
 	#		DELETE
 	# --------------------------
 	def delete(self, repo_path: str):
-		PrintLogger.info(f"Deleting {repo_path}")
+		logger_config.info(f"Deleting {repo_path}")
 
 		try:
 			self.api.delete_file(
@@ -168,8 +154,8 @@ class HFDatasetClient:
 				repo_type=self.repo_type,
 				revision=self.branch,
 			)
-			PrintLogger.success(f"Deleted: {repo_path}")
+			logger_config.success(f"Deleted: {repo_path}")
 			return True
 		except Exception as e:
-			PrintLogger.error(f"Delete failed: {e}")
+			logger_config.error(f"Delete failed: {e}")
 		return False
