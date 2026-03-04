@@ -63,17 +63,17 @@ class HFSTTClient:
 
                 if status == "completed":
                     result = json.loads(file_info.get("caption", "{}"))
-                    out_path = f"{source_path}.json"
+                    out_path = os.path.splitext(source_path)[0] + ".json"
                     with open(out_path, 'w') as out_f:
                         json.dump(result, out_f)
-                    return True
+                    return out_path
 
                 elif file_info.get("status") == "failed":
                     logger_config.error(f"HF API STT Failed: {file_info.get('caption')}")
-                    return False
+                    return None
 
                 time.sleep(2)
                 iteration += 1
         except Exception as e:
             logger_config.error(f"HF API STT failed: {e}. Falling back to local STT...")
-            return False
+            return None
