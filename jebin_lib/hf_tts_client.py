@@ -48,7 +48,8 @@ class HFTTSClient:
                         f.write(audio_response.content)
                     break
                 elif task_info.get("status") == "failed":
-                    raise RuntimeError(f"HF API TTS Failed: {task_info.get('error')}")
+                    logger_config.error(f"HF API TTS Failed: {task_info.get('error')}")
+                    return None
                     
                 time.sleep(1)
                 iteration += 1
@@ -56,4 +57,4 @@ class HFTTSClient:
             return output_path
         except Exception as e:
             logger_config.error(f"HF API TTS failed: {e}. Falling back to local process...")
-            raise
+            return None
