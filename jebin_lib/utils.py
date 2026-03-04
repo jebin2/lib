@@ -138,3 +138,9 @@ def create_directory(directory_path):
         os.makedirs(directory_path, exist_ok=True)
     except Exception as e:
         logger_config.error(f'An error occurred: {e}')
+
+def get_docker_volume_mounts(base_path, config):
+    additional_flags = []
+    additional_flags.append(f'-v {base_path}:{config.neko_attach_folder}')
+    additional_flags.append(config.policy_volume_mount())
+    return additional_flags
