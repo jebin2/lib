@@ -16,6 +16,7 @@ authors = [
 dependencies = [
     "huggingface_hub",
     "requests",
+    "json-repair",
     "custom-logger @ git+https://github.com/jebin2/custom_logger.git"
 ]
 
