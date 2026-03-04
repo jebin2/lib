@@ -1,6 +1,6 @@
 import os
 import shutil
-from huggingface_hub import HfApi, hf_hub_download
+from huggingface_hub import HfApi, hf_hub_download, snapshot_download
 from custom_logger import logger_config
 
 class HFDatasetClient:
@@ -139,6 +139,41 @@ class HFDatasetClient:
 			return True
 		except Exception as e:
 			logger_config.error(f"Download failed: {e}")
+		return False
+
+	# --------------------------
+	#	   DOWNLOAD FOLDER
+	# --------------------------
+	def download_folder(self, repo_path: str, local_folder: str, allow_patterns=None, ignore_patterns=None):
+		"""
+		Download a folder from the Hugging Face dataset repo.
+		repo_path: The folder path in the repo to download (e.g., "videos"). Use "" for the root.
+		local_folder: The local directory to save the files to.
+		"""
+		if not os.path.exists(local_folder):
+			os.makedirs(local_folder, exist_ok=True)
+
+		logger_config.info(f"Downloading folder '{repo_path}' → {local_folder}")
+		try:
+			if repo_path and not allow_patterns:
+				# allow_patterns uses glob, so to download a specific folder:
+				clean_repo_path = repo_path.rstrip('/')
+				allow_patterns = [f"{clean_repo_path}/**"]
+
+			snapshot_download(
+				repo_id=self.repo_id,
+				repo_type=self.repo_type,
+				revision=self.branch,
+				token=self.token,
+				local_dir=local_folder,
+				allow_patterns=allow_patterns,
+				ignore_patterns=ignore_patterns
+			)
+			
+			logger_config.success(f"Downloaded folder to: {local_folder}")
+			return True
+		except Exception as e:
+			logger_config.error(f"Download folder failed: {e}")
 		return False
 
 	# --------------------------
