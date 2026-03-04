@@ -7,7 +7,7 @@ from custom_logger import logger_config
 import time
 
 def is_valid_audio(file_path):
-    if not os.path.exists(file_path):
+    if not file_exists(file_path):
         return False
 
     if os.path.getsize(file_path) < 100:
@@ -24,7 +24,7 @@ def is_valid_audio(file_path):
         return False
 
 def is_valid_video(file_path):
-    if not os.path.exists(file_path):
+    if not file_exists(file_path):
         return False
 
     if os.path.getsize(file_path) < 100:
@@ -41,7 +41,7 @@ def is_valid_video(file_path):
         return False
 
 def is_valid_json(file_path):
-    if not os.path.exists(file_path):
+    if not file_exists(file_path):
         return False
 
     try:
