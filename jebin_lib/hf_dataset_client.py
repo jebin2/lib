@@ -79,8 +79,7 @@ class HFDatasetClient:
 				repo_type=self.repo_type,
 				revision=self.branch,
 				commit_message=f"Upload folder: {local_folder}",
-				ignore_patterns=all_ignore_patterns,
-				multi_commit=True
+				ignore_patterns=all_ignore_patterns
 			)
 
 			logger_config.success("Folder upload completed!")
