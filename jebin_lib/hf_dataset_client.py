@@ -71,7 +71,7 @@ class HFDatasetClient:
 			else:
 				all_ignore_patterns = default_ignore
 
-			# Use HfApi's upload_folder method for better performance
+			# Use HfApi's upload_folder method with multi_commit for better performance on large folders
 			self.api.upload_folder(
 				folder_path=local_folder,
 				path_in_repo=repo_base_path,
@@ -79,7 +79,8 @@ class HFDatasetClient:
 				repo_type=self.repo_type,
 				revision=self.branch,
 				commit_message=f"Upload folder: {local_folder}",
-				ignore_patterns=all_ignore_patterns
+				ignore_patterns=all_ignore_patterns,
+				multi_commit=True
 			)
 
 			logger_config.success("Folder upload completed!")
