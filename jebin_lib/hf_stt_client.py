@@ -65,7 +65,7 @@ class HFSTTClient:
                     result = json.loads(file_info.get("caption", "{}"))
                     out_path = os.path.splitext(source_path)[0] + ".json"
                     with open(out_path, 'w') as out_f:
-                        json.dump(result, out_f)
+                        json.dump(result, out_f, indent=4)
                     return out_path
 
                 elif file_info.get("status") == "failed":
