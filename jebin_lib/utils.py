@@ -39,9 +39,6 @@ def is_valid_json(file_path):
     if not os.path.exists(file_path):
         return False
 
-    if os.path.getsize(file_path) < 100:
-        return False
-
     try:
         with open(file_path, 'r') as f:
             json.load(f)
