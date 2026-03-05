@@ -145,3 +145,86 @@ def get_docker_volume_mounts(config, base_path=None):
         additional_flags.append(f'-v {base_path}:{config.neko_attach_folder}')
     additional_flags.append(config.policy_volume_mount())
     return additional_flags
+
+def setup_git_repo_get_install_pip(repo_url, target_path, pip_name=None, requirements_file=None, force_install=False):
+    is_new = False
+    if not dir_exists(target_path):
+        logger_config.info(f"Cloning {repo_url} to {target_path}")
+        subprocess.run(
+            ["git", "clone", repo_url, target_path],
+            check=True
+        )
+        logger_config.info(f"{repo_url} cloned.")
+        is_new = True
+    else:
+        logger_config.info(f"Pulling {target_path}")
+        try:
+            subprocess.run(
+                ["git", "pull"],
+                cwd=target_path,
+                check=True
+            )
+            logger_config.info(f"{target_path} pulled.")
+        except subprocess.CalledProcessError:
+            logger_config.info(f"Git pull failed for {target_path}, deleting and re-cloning...")
+            shutil.rmtree(target_path)
+            subprocess.run(
+                ["git", "clone", repo_url, target_path],
+                check=True
+            )
+            logger_config.info(f"{repo_url} re-cloned to {target_path}.")
+            is_new = True
+
+    if (is_new or force_install) and not custom_env.IS_DOCKER:
+        if requirements_file:
+            req_path = os.path.join(target_path, requirements_file)
+            if file_exists(req_path):
+                logger_config.info(f"Installing dependencies from {requirements_file}")
+                subprocess.run(
+                    [
+                        "bash",
+                        "-ic",
+                        f"penv {pip_name} && pip install -r {requirements_file}"
+                    ],
+                    check=True,
+                    cwd=target_path
+                )
+                logger_config.info(f"Dependencies from {requirements_file} installed.")
+        elif pip_name:
+            logger_config.info(f"Installing {pip_name} via pip")
+            subprocess.run(
+                [
+                    "bash",
+                    "-ic",
+                    f"penv {pip_name} && pip install -e .[{pip_name}]"
+                ],
+                check=True,
+                cwd=target_path
+            )
+            logger_config.info(f"{pip_name} installed.")
+    return target_path
+
+def get_threads():
+    import psutil
+    return len(psutil.Process().cpu_affinity())
+
+def get_taskset_cores(reserve=2):
+    total = os.cpu_count()
+    usable = max(1, total - reserve)  # ensure at least 1 core
+    cores = list(range(reserve, reserve + usable))
+    return ",".join(map(str, cores))
+
+def run_ffmpeg(cmd):
+    threads = get_threads()
+    cpu_list = get_taskset_cores()
+
+    cmd = [
+        "taskset", "-c", cpu_list,
+        "nice", "-n", "15",
+        "ffmpeg",
+        "-nostdin",
+        "-threads", str(threads)
+    ] + cmd[1:]
+
+    logger_config.debug(f"Running command: {' '.join(cmd)}")
+    return subprocess.run(cmd, capture_output=True, text=True, check=True)
