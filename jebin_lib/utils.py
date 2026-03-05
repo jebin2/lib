@@ -5,6 +5,8 @@ from pathlib import Path
 import shutil
 from custom_logger import logger_config
 import time
+import string
+import secrets
 
 def is_valid_audio(file_path):
     if not file_exists(file_path):
@@ -243,3 +245,31 @@ def copy(source, dest):
         logger_config.success(f"Copied file from '{source}' to '{dest}'")
     except Exception as e:
         logger_config.error(f"An error occurred: {e}")
+
+def generate_random_string(length=10):
+    characters = string.ascii_letters
+    random_string = ''.join(secrets.choice(characters) for _ in range(length))
+    return random_string
+
+def write_videofile(video_clip, output_path, fps=24):
+    audio_file = f'/tmp/{generate_random_string()}.mp3'
+    video_clip.write_videofile(
+        output_path,
+        fps=fps,
+        codec='libx264',
+        # audio_codec='aac',
+        # preset='faster',  # Faster encoding, slightly larger file
+        threads=get_threads(),
+        bitrate='8000k',  # Adjust based on your quality needs
+        remove_temp=True,
+        temp_audiofile=audio_file
+    )
+    remove_file(audio_file)
+
+def write_audiofile(audio_clip, output_path, fps=44100, codec="libmp3lame", bitrate="192k"):
+    audio_clip.write_audiofile(
+        output_path,
+        fps=fps,
+        codec=codec,
+        bitrate=bitrate
+    )
