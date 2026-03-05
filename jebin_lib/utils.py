@@ -175,7 +175,7 @@ def setup_git_repo_get_install_pip(repo_url, target_path, pip_name=None, require
             logger_config.info(f"{repo_url} re-cloned to {target_path}.")
             is_new = True
 
-    if (is_new or force_install) and not custom_env.IS_DOCKER:
+    if is_new or force_install:
         if requirements_file:
             req_path = os.path.join(target_path, requirements_file)
             if file_exists(req_path):
@@ -228,3 +228,18 @@ def run_ffmpeg(cmd):
 
     logger_config.debug(f"Running command: {' '.join(cmd)}")
     return subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+def rename_file(current_name, new_name):
+    try:
+        # Rename the file
+        os.rename(current_name, new_name)
+        logger_config.success(f"File renamed from '{current_name}' to '{new_name}'")
+    except Exception as e:
+        logger_config.error(f"An error occurred: {e}")
+
+def copy(source, dest):
+    try:
+        shutil.copy2(source, dest)
+        logger_config.success(f"Copied file from '{source}' to '{dest}'")
+    except Exception as e:
+        logger_config.error(f"An error occurred: {e}")
