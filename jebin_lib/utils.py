@@ -201,6 +201,8 @@ def setup_git_repo_get_install_pip(repo_url, target_path, pip_name=None, require
     else:
         logger_config.info(f"Pulling {target_path}")
         try:
+            subprocess.run(["git", "reset", "--hard"], cwd=target_path, check=True)
+            subprocess.run(["git", "clean", "-fd"], cwd=target_path, check=True)
             subprocess.run(["git", "pull"], cwd=target_path, check=True)
             logger_config.info(f"{target_path} pulled.")
         except BaseException:
