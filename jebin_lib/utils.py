@@ -148,32 +148,65 @@ def get_docker_volume_mounts(config, base_path=None):
     additional_flags.append(config.policy_volume_mount())
     return additional_flags
 
-def setup_git_repo_get_install_pip(repo_url, target_path, pip_name=None, requirements_file=None, force_install=False):
+def _is_repo_complete(target_path, sparse_dirs=None):
+    """Return True if target_path is a valid, fully checked-out git repo."""
+    try:
+        subprocess.run(
+            ["git", "rev-parse", "--git-dir"],
+            cwd=target_path, check=True,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+    if sparse_dirs:
+        for d in sparse_dirs:
+            dir_path = os.path.join(target_path, d)
+            if not os.path.isdir(dir_path) or not os.listdir(dir_path):
+                return False
+    return True
+
+def _clone_repo(repo_url, target_path, sparse_dirs=None):
+    """Clone repo, cleaning up on any failure (including KeyboardInterrupt)."""
+    try:
+        if sparse_dirs:
+            subprocess.run(
+                ["git", "clone", "--depth=1", "--filter=blob:none", "--sparse", repo_url, target_path],
+                check=True
+            )
+            subprocess.run(
+                ["git", "sparse-checkout", "set"] + sparse_dirs,
+                check=True, cwd=target_path
+            )
+        else:
+            subprocess.run(
+                ["git", "clone", repo_url, target_path],
+                check=True
+            )
+    except BaseException:
+        if os.path.exists(target_path):
+            shutil.rmtree(target_path)
+        raise
+
+def setup_git_repo_get_install_pip(repo_url, target_path, pip_name=None, requirements_file=None, force_install=False, sparse_dirs=None):
     is_new = False
+    if dir_exists(target_path) and not _is_repo_complete(target_path, sparse_dirs):
+        logger_config.info(f"Incomplete repo detected at {target_path}, deleting and re-cloning...")
+        shutil.rmtree(target_path)
+
     if not dir_exists(target_path):
         logger_config.info(f"Cloning {repo_url} to {target_path}")
-        subprocess.run(
-            ["git", "clone", repo_url, target_path],
-            check=True
-        )
+        _clone_repo(repo_url, target_path, sparse_dirs)
         logger_config.info(f"{repo_url} cloned.")
         is_new = True
     else:
         logger_config.info(f"Pulling {target_path}")
         try:
-            subprocess.run(
-                ["git", "pull"],
-                cwd=target_path,
-                check=True
-            )
+            subprocess.run(["git", "pull"], cwd=target_path, check=True)
             logger_config.info(f"{target_path} pulled.")
-        except subprocess.CalledProcessError:
+        except BaseException:
             logger_config.info(f"Git pull failed for {target_path}, deleting and re-cloning...")
             shutil.rmtree(target_path)
-            subprocess.run(
-                ["git", "clone", repo_url, target_path],
-                check=True
-            )
+            _clone_repo(repo_url, target_path, sparse_dirs)
             logger_config.info(f"{repo_url} re-cloned to {target_path}.")
             is_new = True
 
