@@ -266,6 +266,38 @@ def run_ffmpeg(cmd):
     logger_config.debug(f"Running command: {' '.join(cmd)}")
     return subprocess.run(cmd, capture_output=True, text=True, check=True)
 
+def encode_video_consistent(input_path, output_path, start_time=None, duration=None, fps=24, crf=18, preset="fast", include_audio=False):
+    """
+    Re-encode video with stable timing/PTS so downstream clips have deterministic duration.
+    Optional trim is applied with re-encoding to avoid stream-copy timestamp drift.
+    """
+    cmd = ["ffmpeg", "-y"]
+
+    if start_time is not None:
+        safe_start = max(0.0, float(start_time))
+        cmd += ["-ss", f"{safe_start:.6f}"]
+
+    cmd += ["-i", input_path]
+
+    if duration is not None:
+        safe_duration = max(0.0, float(duration))
+        cmd += ["-t", f"{safe_duration:.6f}"]
+
+    cmd += [
+        "-c:v", "libx264",
+        "-preset", preset,
+        "-crf", str(crf),
+        "-vf", f"fps={fps}"
+    ]
+
+    if include_audio:
+        cmd += ["-c:a", "aac"]
+    else:
+        cmd += ["-an"]
+
+    cmd += [output_path]
+    return run_ffmpeg(cmd)
+
 def rename_file(current_name, new_name):
     try:
         # Rename the file
