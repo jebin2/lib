@@ -2,7 +2,7 @@ import json
 import requests
 import time
 import os
-import subprocess
+from jebin_lib import utils
 from custom_logger import logger_config
 
 class HFSTTClient:
@@ -23,10 +23,7 @@ class HFSTTClient:
             if ext in ['.mp4', '.mkv', '.avi', '.mov']:
                 logger_config.info(f"Extracting audio from video {source_path}...")
                 temp_audio_path = f"{source_path}.wav"
-                subprocess.run(
-                    ["ffmpeg", "-y", "-i", source_path, "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", temp_audio_path],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                )
+                utils.run_ffmpeg(["ffmpeg", "-y", "-i", source_path, "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", temp_audio_path])
                 target_file = temp_audio_path
 
             logger_config.info(f"Uploading file {target_file} to HF STT API (this may take a while)...")
