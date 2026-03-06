@@ -48,12 +48,13 @@ class HFDatasetClient:
 	# --------------------------
 	#	   UPLOAD FOLDER
 	# --------------------------
-	def upload_folder(self, local_folder: str, repo_base_path: str = "", ignore_patterns=None) -> bool:
+	def upload_folder(self, local_folder: str, repo_base_path: str = "", ignore_patterns=None, delete_patterns=None) -> bool:
 		"""
 		Upload all files inside a folder (recursive).
 		local_folder: The local folder path to upload.
 		repo_base_path: Base path inside the repo (e.g., "videos")
 		ignore_patterns: List of patterns to ignore (e.g., ["*.txt", "temp/*"])
+		delete_patterns: List of patterns to delete from remote before upload (e.g., ["*"] to overwrite completely)
 		"""
 		if not os.path.isdir(local_folder):
 			logger_config.error(f"Folder not found: {local_folder}")
@@ -79,7 +80,8 @@ class HFDatasetClient:
 				repo_type=self.repo_type,
 				revision=self.branch,
 				commit_message=f"Upload folder: {local_folder}",
-				ignore_patterns=all_ignore_patterns
+				ignore_patterns=all_ignore_patterns,
+				delete_patterns=delete_patterns
 			)
 
 			logger_config.success("Folder upload completed!")
