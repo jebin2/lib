@@ -172,6 +172,11 @@ class GoogleLoginAutomator:
 
     def _enter_password(self, page):
         logger_config.info("[GoogleLogin] Step 4: Checking for password input...")
+        # Wait briefly in case the page is still transitioning (e.g. after account chooser click)
+        try:
+            page.wait_for_selector('input[type="password"]', timeout=5000)
+        except Exception:
+            pass
         if page.locator('input[type="password"]').is_visible():
             _, password = self._get_credentials()
             logger_config.info("[GoogleLogin] Step 4a: Entering password.")
