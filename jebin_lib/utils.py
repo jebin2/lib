@@ -264,7 +264,7 @@ def run_ffmpeg(cmd):
     ] + cmd[1:]
 
     logger_config.debug(f"Running command: {' '.join(cmd)}")
-    return subprocess.run(cmd, capture_output=True, text=True, check=True)
+    return subprocess.run(cmd, text=True, check=True)
 
 def encode_video_consistent(input_path, output_path, start_time=None, duration=None, fps=24, crf=18, preset="fast", include_audio=False):
     """
