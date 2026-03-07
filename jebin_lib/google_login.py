@@ -158,10 +158,13 @@ class GoogleLoginAutomator:
 
     def _enter_email(self, page):
         logger_config.info("[GoogleLogin] Step 3: Checking for email input...")
+        try:
+            page.wait_for_selector("#identifierId", timeout=5000)
+        except Exception:
+            pass
         if page.locator("#identifierId").is_visible():
             email, _ = self._get_credentials()
             logger_config.info("[GoogleLogin] Step 3a: Entering email.")
-            page.wait_for_selector("#identifierId")
             page.wait_for_timeout(1000)
             page.fill("#identifierId", email)
             page.wait_for_selector("#identifierNext")
