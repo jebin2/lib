@@ -7,6 +7,8 @@ from custom_logger import logger_config
 import time
 import string
 import secrets
+import hashlib
+import random
 
 def is_valid_audio(file_path):
     if not file_exists(file_path):
@@ -316,6 +318,21 @@ def copy(source, dest):
 def generate_random_string(length=10):
     characters = string.ascii_letters
     random_string = ''.join(secrets.choice(characters) for _ in range(length))
+    return random_string
+
+
+def generate_random_string_from_input(input_string, length=16):
+    # Hash the input string to get a consistent value
+    hash_object = hashlib.sha256(input_string.encode())
+    hashed_string = hash_object.hexdigest()
+
+    # Use the hash to seed the random number generator
+    random.seed(hashed_string)
+
+    # Generate a random string based on the seed
+    characters = string.ascii_letters + string.digits
+    random_string = ''.join(random.choice(characters) for _ in range(length))
+
     return random_string
 
 def write_videofile(video_clip, output_path, fps=24):
