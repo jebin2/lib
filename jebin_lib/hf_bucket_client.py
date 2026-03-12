@@ -22,10 +22,10 @@ class HFBucketClient:
             return f"{base}/{remote_path.strip('/')}"
         return base
 
-    def upload_folder(self, local_folder: str, remote_path: str = "", delete_patterns=None) -> bool:
+    def upload_folder(self, local_folder: str, remote_path: str = "", delete: bool = False) -> bool:
         """
         Sync local_folder → bucket remote_path.
-        delete_patterns=["*"] mirrors exactly (deletes remote files not in local).
+        delete=True mirrors exactly (removes remote files not present locally).
         """
         if not os.path.isdir(local_folder):
             logger_config.error(f"Folder not found: {local_folder}")
@@ -34,7 +34,6 @@ class HFBucketClient:
         dst = self._bucket_url(remote_path)
         logger_config.info(f"Uploading folder: {local_folder} → {dst}")
         try:
-            delete = delete_patterns is not None
             sync_bucket(local_folder, dst, delete=delete)
             logger_config.success("Folder upload completed!")
             return True
