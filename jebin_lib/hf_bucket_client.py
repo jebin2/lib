@@ -1,9 +1,18 @@
 import os
-import threading
+from multiprocessing import Process, Queue
 from huggingface_hub import HfFileSystem, sync_bucket
 from custom_logger import logger_config
 
 FILE_UPLOAD_TIMEOUT = 120  # seconds per file
+
+
+def _upload_worker(local_path, remote_url, token, result_queue):
+    try:
+        fs = HfFileSystem(token=token)
+        fs.put_file(local_path, remote_url)
+        result_queue.put(None)
+    except Exception as e:
+        result_queue.put(str(e))
 
 
 class HFBucketClient:
@@ -33,9 +42,6 @@ class HFBucketClient:
             entries = self._fs.find(remote_url, detail=True)
             for path, info in entries.items():
                 if info.get("type") == "file":
-                    rel = os.path.relpath(path, remote_url.replace("hf://", "", 1).lstrip("/"))
-                    # HfFileSystem paths don't have hf:// prefix in find() keys
-                    # Compute rel relative to the bucket url path portion
                     bucket_prefix = remote_url.replace("hf://", "")
                     rel = path[len(bucket_prefix):].lstrip("/")
                     remote[rel] = info.get("size", 0)
@@ -44,23 +50,19 @@ class HFBucketClient:
         return remote
 
     def _upload_file(self, local_path, remote_url):
-        """Upload a single file with a per-file timeout."""
-        result = {"error": None}
-
-        def _do():
-            try:
-                self._fs.put_file(local_path, remote_url)
-            except Exception as e:
-                result["error"] = e
-
-        t = threading.Thread(target=_do, daemon=True)
-        t.start()
-        t.join(timeout=FILE_UPLOAD_TIMEOUT)
-        if t.is_alive():
+        """Upload a single file in a subprocess with a hard timeout."""
+        q = Queue()
+        p = Process(target=_upload_worker, args=(local_path, remote_url, self.token, q), daemon=True)
+        p.start()
+        p.join(timeout=FILE_UPLOAD_TIMEOUT)
+        if p.is_alive():
+            p.terminate()
+            p.join()
             logger_config.warning(f"Upload timed out ({FILE_UPLOAD_TIMEOUT}s), skipping: {os.path.basename(local_path)}")
             return False
-        if result["error"]:
-            logger_config.error(f"Upload failed: {os.path.basename(local_path)}: {result['error']}")
+        error = q.get() if not q.empty() else None
+        if error:
+            logger_config.error(f"Upload failed: {os.path.basename(local_path)}: {error}")
             return False
         return True
 
@@ -72,7 +74,6 @@ class HFBucketClient:
         dst = self._bucket_url(remote_path)
         logger_config.info(f"Uploading folder: {local_folder} → {dst}")
 
-        # Build local file list
         local_files = {}
         for root, _, files in os.walk(local_folder):
             for fname in files:
@@ -85,27 +86,22 @@ class HFBucketClient:
         uploads = []
         for rel, abs_path in local_files.items():
             local_size = os.path.getsize(abs_path)
-            remote_size = remote_files.get(rel)
-            if remote_size is None or remote_size != local_size:
+            if remote_files.get(rel) != local_size:
                 uploads.append((rel, abs_path))
 
         deletes = []
         if delete:
-            for rel in remote_files:
-                if rel not in local_files:
-                    deletes.append(rel)
+            deletes = [rel for rel in remote_files if rel not in local_files]
 
         logger_config.info(f"Sync plan: uploads={len(uploads)}, deletes={len(deletes)}, skips={len(local_files) - len(uploads)}")
 
         for rel, abs_path in uploads:
-            remote_file_url = f"{dst}/{rel}"
             logger_config.info(f"Uploading: {rel}")
-            self._upload_file(abs_path, remote_file_url)
+            self._upload_file(abs_path, f"{dst}/{rel}")
 
         for rel in deletes:
-            remote_file_url = f"{dst}/{rel}"
             try:
-                self._fs.rm(remote_file_url)
+                self._fs.rm(f"{dst}/{rel}")
                 logger_config.info(f"Deleted remote: {rel}")
             except Exception as e:
                 logger_config.warning(f"Delete failed: {rel}: {e}")
