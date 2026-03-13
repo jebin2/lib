@@ -146,7 +146,7 @@ def create_directory(directory_path):
 def get_docker_volume_mounts(config, base_path=None):
     additional_flags = []
     if base_path:
-        additional_flags.append(f'-v {base_path}:{config.neko_attach_folder}')
+        additional_flags.append(f'-v "{base_path}":{config.neko_attach_folder}')
     additional_flags.append(config.policy_volume_mount())
     return additional_flags
 
