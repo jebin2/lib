@@ -3,7 +3,7 @@ from multiprocessing import Process, Queue
 from huggingface_hub import HfFileSystem, sync_bucket
 from custom_logger import logger_config
 
-FILE_UPLOAD_TIMEOUT = 120  # seconds per file
+FILE_UPLOAD_TIMEOUT = 300  # seconds per file
 
 
 def _upload_worker(local_path, remote_url, token, result_queue):
