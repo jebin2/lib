@@ -450,3 +450,81 @@ def manage_gpu(size_gb: float = 0, gpu_index: int = 0, action: str = "check"):
         return free_gb > size_gb
     except Exception:
         return False
+
+# ------------------------------------------------------------------ json utils
+
+def extract_json(text):
+    """Strip non-JSON garbage prefix/suffix and return the JSON portion.
+
+    Handles the AIStudio UI pattern where a prefix such as
+    'codeJson[downloadcontent_copyexpand_less' is prepended to the response,
+    absorbing the opening '[' of the original JSON array.
+    Works for arrays of objects, arrays of strings, and plain objects.
+    """
+    import re
+    first_bracket = text.find('[')
+    first_brace = text.find('{')
+
+    if first_bracket == -1 and first_brace == -1:
+        return text
+
+    if first_bracket != -1 and (first_brace == -1 or first_bracket < first_brace):
+        after = text[first_bracket + 1:]
+        stripped = after.lstrip()
+        first_val_char = stripped[0] if stripped else ''
+        if first_val_char not in ('"', '[', '{') and not (first_val_char.isdigit() or first_val_char in '-tfn'):
+            val_match = re.search(r'["\[{]|[-\d]|true\b|false\b|null\b', after)
+            if val_match:
+                content_start = first_bracket + 1 + val_match.start()
+                end = text.rfind(']')
+                return '[' + text[content_start: end + 1] if end > content_start else text[content_start:]
+        return text[first_bracket:]
+    else:
+        return text[first_brace:]
+
+def parse_json(text, schema=None):
+    """Extract, repair, and optionally validate JSON from a string.
+
+    Args:
+        text: Raw string that may contain garbage prefix/suffix.
+        schema: Optional dict to validate structure after parsing. Supported keys:
+            - "type": expected Python type, e.g. list or dict
+            - "items": dict with "required" (list of required keys in each item),
+                       only checked when type is list
+            - "required": list of required top-level keys (for dicts)
+
+    Returns:
+        Parsed object (list or dict).
+
+    Raises:
+        ValueError: if parsing fails or schema validation fails.
+    """
+    import json_repair
+
+    parsed = json_repair.loads(extract_json(text))
+
+    if schema is None:
+        return parsed
+
+    expected_type = schema.get("type")
+    if expected_type is not None and not isinstance(parsed, expected_type):
+        raise ValueError(f"Expected {expected_type.__name__}, got {type(parsed).__name__}")
+
+    if isinstance(parsed, list):
+        item_schema = schema.get("items")
+        if item_schema is not None:
+            required_keys = item_schema.get("required", [])
+            for i, item in enumerate(parsed):
+                if not isinstance(item, dict):
+                    raise ValueError(f"Item {i} is not a dict: {type(item).__name__}")
+                missing = [k for k in required_keys if k not in item]
+                if missing:
+                    raise ValueError(f"Item {i} missing keys: {missing}")
+
+    elif isinstance(parsed, dict):
+        required_keys = schema.get("required", [])
+        missing = [k for k in required_keys if k not in parsed]
+        if missing:
+            raise ValueError(f"Missing required keys: {missing}")
+
+    return parsed
