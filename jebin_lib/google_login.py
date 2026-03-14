@@ -201,12 +201,12 @@ class GoogleLoginAutomator:
                 if heading and heading.text_content() == "2-Step Verification":
                     logger_config.info(f"[GoogleLogin] Step 6a: 2FA detected (attempt {attempt + 1}). Uploading screenshot...")
                     self._upload_screenshot(page, f"2fa_{attempt + 1}")
-                    # Uncheck "Don't ask again on this device" if present
+                    # Check "Don't ask again on this device" if present
                     checkbox = page.query_selector('input[type="checkbox"]')
                     if checkbox:
                         try:
-                            checkbox.uncheck()
-                            logger_config.info("[GoogleLogin] Step 6b: Unchecked 'Don't ask again'.")
+                            checkbox.check()
+                            logger_config.info("[GoogleLogin] Step 6b: Checked 'Don't ask again'.")
                         except Exception:
                             pass
                     page.wait_for_timeout(5000)
