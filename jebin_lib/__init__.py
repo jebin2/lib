@@ -8,6 +8,7 @@ from .hf_stt_client import HFSTTClient
 from .hf_ttt_client import HFTTTClient
 from .notion_client import NotionClient
 from .google_login import GoogleLoginAutomator
+from .loudness_normalize import normalize_loudness
 
 __version__ = "0.1.0"
-__all__ = ["HFDatasetClient", "HFBucketClient", "load_env", "HFTTSClient", "HFSTTClient", "HFTTTClient", "NotionClient", "GoogleLoginAutomator"]
+__all__ = ["HFDatasetClient", "HFBucketClient", "load_env", "HFTTSClient", "HFSTTClient", "HFTTTClient", "NotionClient", "GoogleLoginAutomator", "normalize_loudness"]
