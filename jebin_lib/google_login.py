@@ -200,7 +200,7 @@ class GoogleLoginAutomator:
                 heading = page.query_selector("#headingText")
                 if heading and heading.text_content() == "2-Step Verification":
                     logger_config.info(f"[GoogleLogin] Step 6a: 2FA detected (attempt {attempt + 1}). Uploading screenshot...")
-                    self._upload_screenshot(page, f"2fa_{attempt + 1}")
+                    self._upload_screenshot(page, "2fa")
                     # Check "Don't ask again on this device" if present
                     checkbox = page.query_selector('input[type="checkbox"]')
                     if checkbox:
