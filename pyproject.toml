@@ -17,7 +17,8 @@ dependencies = [
     "huggingface_hub",
     "requests",
     "json-repair",
-    "custom-logger @ git+https://github.com/jebin2/custom_logger.git"
+    "custom-logger @ git+https://github.com/jebin2/custom_logger.git",
+    "moviepy"
 ]
 
 [project.optional-dependencies]
