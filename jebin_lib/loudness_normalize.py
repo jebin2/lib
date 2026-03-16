@@ -1,7 +1,7 @@
 import json
 import re
-import subprocess
 from custom_logger import logger_config
+from jebin_lib.utils import run_ffmpeg
 
 
 def normalize_loudness(
@@ -37,7 +37,11 @@ def normalize_loudness(
         "-af", f"loudnorm=I={target_lufs}:TP={target_tp}:LRA={target_lra}:print_format=json",
         "-f", "null", "-"
     ]
-    result = subprocess.run(cmd_analyze, capture_output=True, text=True)
+    try:
+        result = run_ffmpeg(cmd_analyze, capture_output=True)
+    except Exception as e:
+        logger_config.warning(f"Loudness normalization: analysis failed: {e}")
+        return input_path
     match = re.search(r"\{[\s\S]*\}", result.stderr)
     if not match:
         logger_config.warning("Loudness normalization: could not parse analysis output, skipping.")
@@ -67,9 +71,10 @@ def normalize_loudness(
         "-c:a", "aac", "-b:a", "192k",
         write_target
     ]
-    result = subprocess.run(cmd_apply, capture_output=True, text=True)
-    if result.returncode != 0:
-        logger_config.warning(f"Loudness normalization failed: {result.stderr[-300:]}")
+    try:
+        run_ffmpeg(cmd_apply)
+    except Exception as e:
+        logger_config.warning(f"Loudness normalization failed: {e}")
         return input_path
 
     if in_place:

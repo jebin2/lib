@@ -253,7 +253,7 @@ def get_taskset_cores(reserve=2):
     cores = list(range(reserve, reserve + usable))
     return ",".join(map(str, cores))
 
-def run_ffmpeg(cmd):
+def run_ffmpeg(cmd, **kwargs):
     threads = get_threads()
     cpu_list = get_taskset_cores()
 
@@ -266,7 +266,7 @@ def run_ffmpeg(cmd):
     ] + cmd[1:]
 
     logger_config.debug(f"Running command: {' '.join(cmd)}")
-    return subprocess.run(cmd, text=True, check=True)
+    return subprocess.run(cmd, text=True, check=True, **kwargs)
 
 def encode_video_consistent(input_path, output_path, start_time=None, duration=None, fps=24, crf=18, preset="fast", include_audio=False):
     """
