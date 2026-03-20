@@ -540,3 +540,18 @@ def to_abs(path, base_path):
     if path and not os.path.isabs(path):
         return os.path.join(base_path, path)
     return path
+
+def speed_up_audio(file_path: str, speed: float = 1.3) -> None:
+    """Speed up audio in-place using ffmpeg atempo filter (pitch-preserving)."""
+    tmp_path = file_path + ".tmp_speed.wav"
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", file_path, "-filter:a", f"atempo={speed}", tmp_path],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        os.replace(tmp_path, file_path)
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
