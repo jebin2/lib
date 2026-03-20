@@ -528,3 +528,15 @@ def parse_json(text, schema=None):
             raise ValueError(f"Missing required keys: {missing}")
 
     return parsed
+
+def to_rel(path, base_path):
+    """Convert an path to relative path."""
+    if path and os.path.isabs(path):
+        return os.path.relpath(path, base_path)
+    return path
+
+def to_abs(path, base_path):
+    """Convert an path to absolute path."""
+    if path and not os.path.isabs(path):
+        return os.path.join(base_path, path)
+    return path
