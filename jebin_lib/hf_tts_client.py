@@ -18,6 +18,7 @@ class HFTTSClient:
                 "speed": float(self.speed),
                 "hide_from_ui": 1
             }
+            logger_config.info(payload)
             response = requests.post(url, json=payload)
             response.raise_for_status()
             task_id = response.json().get("id")
