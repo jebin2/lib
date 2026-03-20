@@ -541,6 +541,28 @@ def to_abs(path, base_path):
         return os.path.join(base_path, path)
     return path
 
+def trim_silence(file_path: str, threshold_db: float = -40.0) -> None:
+    """Trim silence from both ends of an audio file in-place using ffmpeg."""
+    tmp_path = file_path + ".tmp_trim.wav"
+    silence_filter = (
+        f"silenceremove=start_periods=1:start_silence=0.05:start_threshold={threshold_db}dB,"
+        f"areverse,"
+        f"silenceremove=start_periods=1:start_silence=0.05:start_threshold={threshold_db}dB,"
+        f"areverse"
+    )
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", file_path, "-filter:a", silence_filter, tmp_path],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        os.replace(tmp_path, file_path)
+        logger_config.info(f"Silence trimmed from both ends")
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
 def speed_up_audio(file_path: str, speed: float = 1.3) -> None:
     """Speed up audio in-place using ffmpeg atempo filter (pitch-preserving)."""
     tmp_path = file_path + ".tmp_speed.wav"
