@@ -552,6 +552,7 @@ def speed_up_audio(file_path: str, speed: float = 1.3) -> None:
             stderr=subprocess.DEVNULL,
         )
         os.replace(tmp_path, file_path)
+        logger_config.info(f"Audio sped up by {speed}x")
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
