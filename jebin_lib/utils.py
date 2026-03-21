@@ -563,7 +563,7 @@ def trim_silence(file_path: str, threshold_db: float = -40.0) -> None:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
 
-def speed_up_audio(file_path: str, speed: float = 1.15) -> None:
+def speed_up_audio(file_path: str, speed: float = 1.2) -> None:
     """Speed up audio in-place using ffmpeg atempo filter (pitch-preserving)."""
     tmp_path = file_path + ".tmp_speed.wav"
     try:
