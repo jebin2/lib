@@ -23,6 +23,9 @@ def ensure_hf_mounted(hf_bucket_id, hf_token, mount_path):
     result = subprocess.run(["hf-mount", "status"], capture_output=True, text=True)
     if mount_path in result.stdout:
         return
+    if not os.path.exists(mount_path):
+        subprocess.run(["sudo", "mkdir", "-p", mount_path], check=True)
+        subprocess.run(["sudo", "chown", os.getlogin(), mount_path], check=True)
     logger_config.info(f"Mounting HF bucket {hf_bucket_id} at {mount_path}")
     subprocess.run(
         ["hf-mount", "start", "--hf-token", hf_token,
