@@ -39,11 +39,35 @@ def ensure_hf_mount_installed():
     os.environ["PATH"] = local_bin + os.pathsep + os.environ.get("PATH", "")
 
 
+def is_mount_stale(mount_path):
+    try:
+        os.listdir(mount_path)
+        return False
+    except OSError as e:
+        return e.errno == 116
+
+
+def remount_hf(hf_bucket_id, hf_token, mount_path):
+    logger_config.info(f"Stale file handle detected, remounting {mount_path}...")
+    subprocess.run(["hf-mount", "stop", mount_path], capture_output=True)
+    result = subprocess.run(
+        ["hf-mount", "start", "--hf-token", hf_token,
+         "bucket", hf_bucket_id, mount_path],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0 and "daemon already running" not in result.stderr:
+        raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
+    logger_config.info(f"Remounted {mount_path} successfully.")
+
+
 def ensure_hf_mounted(hf_bucket_id, hf_token, mount_path):
     if not hf_bucket_id or not hf_token:
         return
     ensure_hf_mount_installed()
     ensure_nfs_sudo()
+    if mount_path and is_mount_stale(mount_path):
+        remount_hf(hf_bucket_id, hf_token, mount_path)
+        return
     result = subprocess.run(["hf-mount", "status"], capture_output=True, text=True)
     if mount_path in result.stdout or mount_path in result.stderr:
         return
