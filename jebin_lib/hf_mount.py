@@ -39,23 +39,70 @@ def ensure_hf_mount_installed():
     os.environ["PATH"] = local_bin + os.pathsep + os.environ.get("PATH", "")
 
 
-def cleanup_stale_files(path):
+def cleanup_stale_files(path, _is_child=False):
     """Recursively delete any files/dirs under path that have stale NFS handles."""
+    import shutil
+    logger_config.info(f"Scanning for stale entries in: {path}")
     try:
-        entries = os.scandir(path)
-    except OSError:
+        entries = list(os.scandir(path))
+    except OSError as e:
+        if e.errno == 116:
+            if _is_child:
+                logger_config.warning(f"Stale directory detected (scandir failed), removing: {path}")
+                shutil.rmtree(path, ignore_errors=True)
+                logger_config.info(f"Removed stale directory: {path}")
+            else:
+                logger_config.warning(f"Stale directory detected (scandir failed) on root path: {path} — skipping delete")
+        else:
+            logger_config.error(f"Failed to scan {path}: {e}")
         return
+
+    # Test write access — existing files may stat fine but creating new files can still raise ESTALE
+    if _is_child:
+        test_path = os.path.join(path, '.stale_write_check')
+        try:
+            with open(test_path, 'w') as f:
+                f.write('')
+            os.remove(test_path)
+        except OSError as e:
+            if e.errno == 116:
+                logger_config.warning(f"Stale directory detected (write test failed), removing: {path}")
+                shutil.rmtree(path, ignore_errors=True)
+                logger_config.info(f"Removed stale directory: {path}")
+                return
+            else:
+                logger_config.error(f"Write test failed on {path}: {e}")
+
+    stale_count = 0
     for entry in entries:
         try:
             if entry.is_dir(follow_symlinks=False):
-                cleanup_stale_files(entry.path)
+                cleanup_stale_files(entry.path, _is_child=True)
             else:
-                entry.stat()
+                # utime forces SETATTR on NFS server — non-destructive write test
+                try:
+                    os.utime(entry.path, None)
+                except OSError as write_err:
+                    if write_err.errno == 116:
+                        raise  # stale — outer except will delete the file
+                    # EACCES (read-only) — fall back to read test
+                    fd = os.open(entry.path, os.O_RDONLY | os.O_NOFOLLOW)
+                    try:
+                        os.read(fd, 1)
+                    finally:
+                        os.close(fd)
         except OSError as e:
             if e.errno == 116:
-                import shutil
+                logger_config.warning(f"Stale entry detected: {entry.path}")
                 shutil.rmtree(entry.path, ignore_errors=True)
                 logger_config.info(f"Removed stale entry: {entry.path}")
+                stale_count += 1
+            else:
+                logger_config.error(f"Unexpected OSError on {entry.path}: {e}")
+    if stale_count:
+        logger_config.info(f"Cleanup complete: removed {stale_count} stale entries under {path}")
+    else:
+        logger_config.info(f"No stale entries found in: {path}")
 
 
 def is_mount_stale(mount_path):
