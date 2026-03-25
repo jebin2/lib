@@ -39,6 +39,25 @@ def ensure_hf_mount_installed():
     os.environ["PATH"] = local_bin + os.pathsep + os.environ.get("PATH", "")
 
 
+def cleanup_stale_files(path):
+    """Recursively delete any files/dirs under path that have stale NFS handles."""
+    try:
+        entries = os.scandir(path)
+    except OSError:
+        return
+    for entry in entries:
+        try:
+            if entry.is_dir(follow_symlinks=False):
+                cleanup_stale_files(entry.path)
+            else:
+                entry.stat()
+        except OSError as e:
+            if e.errno == 116:
+                import shutil
+                shutil.rmtree(entry.path, ignore_errors=True)
+                logger_config.info(f"Removed stale entry: {entry.path}")
+
+
 def is_mount_stale(mount_path):
     try:
         os.listdir(mount_path)
