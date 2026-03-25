@@ -4,6 +4,24 @@ import subprocess
 from custom_logger import logger_config
 
 
+def ensure_nfs_sudo():
+    sudoers_file = "/etc/sudoers.d/hf-mount"
+    if os.path.exists(sudoers_file):
+        return
+    user = os.getlogin()
+    rules = (
+        f"{user} ALL=(ALL) NOPASSWD: /usr/sbin/mount.nfs\n"
+        f"{user} ALL=(ALL) NOPASSWD: /usr/sbin/umount.nfs\n"
+        f"{user} ALL=(ALL) NOPASSWD: /bin/umount\n"
+    )
+    logger_config.info("Configuring passwordless sudo for NFS mount...")
+    subprocess.run(
+        ["sudo", "tee", sudoers_file],
+        input=rules, text=True, check=True, capture_output=True
+    )
+    subprocess.run(["sudo", "chmod", "440", sudoers_file], check=True)
+
+
 def ensure_hf_mount_installed():
     if subprocess.run(["which", "hf-mount"], capture_output=True).returncode == 0:
         return
@@ -20,6 +38,7 @@ def ensure_hf_mounted(hf_bucket_id, hf_token, mount_path):
     if not hf_bucket_id or not hf_token:
         return
     ensure_hf_mount_installed()
+    ensure_nfs_sudo()
     result = subprocess.run(["hf-mount", "status"], capture_output=True, text=True)
     if mount_path in result.stdout:
         return
