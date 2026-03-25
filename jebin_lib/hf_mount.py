@@ -45,14 +45,16 @@ def ensure_hf_mounted(hf_bucket_id, hf_token, mount_path):
     ensure_hf_mount_installed()
     ensure_nfs_sudo()
     result = subprocess.run(["hf-mount", "status"], capture_output=True, text=True)
-    if mount_path in result.stdout:
+    if mount_path in result.stdout or mount_path in result.stderr:
         return
     if not os.path.exists(mount_path):
         subprocess.run(["sudo", "mkdir", "-p", mount_path], check=True)
         subprocess.run(["sudo", "chown", os.getlogin(), mount_path], check=True)
     logger_config.info(f"Mounting HF bucket {hf_bucket_id} at {mount_path}")
-    subprocess.run(
+    result = subprocess.run(
         ["hf-mount", "start", "--hf-token", hf_token,
          "bucket", hf_bucket_id, mount_path],
-        check=True
+        capture_output=True, text=True
     )
+    if result.returncode != 0 and "daemon already running" not in result.stderr:
+        raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
