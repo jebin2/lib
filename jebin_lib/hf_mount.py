@@ -6,13 +6,18 @@ from custom_logger import logger_config
 
 def ensure_nfs_sudo():
     sudoers_file = "/etc/sudoers.d/hf-mount"
+    mount_nfs = subprocess.run(["which", "mount.nfs"], capture_output=True, text=True).stdout.strip()
+    if not mount_nfs:
+        logger_config.info("Installing nfs-common...")
+        subprocess.run(["sudo", "apt-get", "install", "-y", "nfs-common"], check=True)
+        mount_nfs = subprocess.run(["which", "mount.nfs"], capture_output=True, text=True).stdout.strip()
     if os.path.exists(sudoers_file):
         return
     user = os.getlogin()
     rules = (
-        f"{user} ALL=(ALL) NOPASSWD: /usr/sbin/mount.nfs\n"
-        f"{user} ALL=(ALL) NOPASSWD: /usr/sbin/umount.nfs\n"
+        f"{user} ALL=(ALL) NOPASSWD: {mount_nfs}\n"
         f"{user} ALL=(ALL) NOPASSWD: /bin/umount\n"
+        f"{user} ALL=(ALL) NOPASSWD: /usr/bin/umount\n"
     )
     logger_config.info("Configuring passwordless sudo for NFS mount...")
     subprocess.run(
