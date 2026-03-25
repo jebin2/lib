@@ -28,15 +28,18 @@ def ensure_nfs_sudo():
 
 
 def ensure_hf_mount_installed():
+    local_bin = os.path.expanduser("~/.local/bin")
+    if local_bin not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = local_bin + os.pathsep + os.environ.get("PATH", "")
     if subprocess.run(["which", "hf-mount"], capture_output=True).returncode == 0:
+        return
+    if os.path.exists(os.path.join(local_bin, "hf-mount")):
         return
     logger_config.info("hf-mount not found, installing...")
     subprocess.run(
         "curl -fsSL https://raw.githubusercontent.com/huggingface/hf-mount/main/install.sh | sh",
         shell=True, check=True
     )
-    local_bin = os.path.expanduser("~/.local/bin")
-    os.environ["PATH"] = local_bin + os.pathsep + os.environ.get("PATH", "")
 
 
 def cleanup_stale_files(path, _is_child=False):
