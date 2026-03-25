@@ -324,6 +324,7 @@ class GoogleLoginAutomator:
 
     def _save_auth_code_url(self, url):
         if self.authorization_code_path:
+            os.makedirs(os.path.dirname(self.authorization_code_path), exist_ok=True)
             with open(self.authorization_code_path, "w") as f:
                 f.write(url)
             logger_config.info(f"[GoogleLogin] Auth code URL saved to {self.authorization_code_path}")
