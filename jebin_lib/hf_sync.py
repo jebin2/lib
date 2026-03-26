@@ -1,24 +1,27 @@
-# HF Sync — local CONTENT_TO_BE_PROCESSED  →  HF_MOUNT_PATH
+# HF Sync
 #
-# Flow:
-#   1. All processing writes to local CONTENT_TO_BE_PROCESSED (never directly to HF).
-#   2. sync_to_hf() is called explicitly at two points:
+# Two directions:
 #
-#      a. End of each main loop iteration  →  sync_to_hf(src, dst)
+# 1. local CONTENT_TO_BE_PROCESSED  →  HF_MOUNT_PATH   (sync_to_hf)
+#    All processing writes locally; sync_to_hf pushes to the NFS mount.
+#
+#      a. Before each pipeline run  →  sync_to_hf(src, dst, subpath=...)
 #         - Skips if called within SYNC_INTERVAL (5 min) of the last sync.
 #         - Copy pass : walks src, copies new/modified files to dst.
 #         - Delete pass: walks dst, removes anything no longer present in src.
 #         - Updates _last_sync_time after completion.
 #
-#      b. After publisher _cleanup_folder()  →  sync_to_hf(src, dst, force=True)
+#      b. After publisher _cleanup_folder()  →  sync_to_hf(src, dst, subpath=..., force=True)
 #         - Bypasses the cooldown and runs immediately.
 #         - Same copy + delete pass so deleted files are removed from HF right away.
 #         - Does NOT update _last_sync_time so the next scheduled sync still runs on time.
 #
-#   3. Subfolder sync  →  sync_to_hf(src, dst, subpath="category/video_name")
-#         - Scopes the copy + delete to src/subpath → dst/subpath only.
-#         - Parent dirs in dst are created automatically.
-#         - Works with force=True as well.
+#      subpath="category/video_name": scopes the sync to that subfolder only;
+#         parent dirs in dst are created automatically.
+#
+# 2. HF_BUCKET_ID  →  local CONTENT_TO_BE_PROCESSED    (sync_from_hf)
+#    Downloads the full HF bucket content directly via the HF API (no NFS mount needed).
+#    Triggered by passing --syncfromhf on the command line; runs once then exits.
 
 import os
 import shutil
@@ -94,3 +97,17 @@ def sync_to_hf(src_base, dst_base, subpath=None, force=False):
         logger_config.info("HF sync completed")
     except Exception as e:
         logger_config.error(f"HF sync failed: {e}")
+
+
+def sync_from_hf(dst, bucket_id, hf_token):
+    """Download the full HF bucket directly to dst via the HF API (no NFS mount needed)."""
+    if not bucket_id or not hf_token:
+        logger_config.warning("sync_from_hf: HF_BUCKET_ID or HF_TOKEN not set, skipping.")
+        return
+    try:
+        from .hf_bucket_client import HFBucketClient
+        logger_config.info(f"Syncing from HF bucket {bucket_id} -> {dst}")
+        HFBucketClient(token=hf_token, bucket_id=bucket_id).download_folder(remote_path="", local_folder=dst)
+        logger_config.info("sync_from_hf completed")
+    except Exception as e:
+        logger_config.error(f"sync_from_hf failed: {e}")
