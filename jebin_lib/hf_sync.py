@@ -88,6 +88,15 @@ def sync_to_hf(src_base, dst_base, subpath=None, force=False):
                 try:
                     if not os.path.exists(dst_file) or os.path.getmtime(src_file) > os.path.getmtime(dst_file):
                         shutil.copy2(src_file, dst_file)
+                except OSError as e:
+                    if e.errno == 116:  # ESTALE — src is stale, remove from dst
+                        logger_config.warning(f"HF sync: stale file handle on {src_file}, removing from HF mount")
+                        try:
+                            os.remove(dst_file)
+                        except Exception:
+                            pass
+                    else:
+                        logger_config.warning(f"HF sync: failed to copy {src_file}: {e}")
                 except Exception as e:
                     logger_config.warning(f"HF sync: failed to copy {src_file}: {e}")
 
