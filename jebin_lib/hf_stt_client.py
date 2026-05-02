@@ -14,7 +14,7 @@ class HFSTTClient:
         """
         logger_config.info("Using remote HF STT API")
         try:
-            url = "https://jebin2-stt.hf.space/api/upload"
+            url = os.environ.get("STT_API_URL", "https://jebin2-stt.hf.space")
 
             target_file = source_path
             temp_audio_path = None
@@ -30,8 +30,8 @@ class HFSTTClient:
 
             with open(target_file, 'rb') as f:
                 files = {'audio': f}
-                data = {'hide_from_ui': 1}
-                response = requests.post(url, files=files, data=data)
+                data = {'hide_from_ui': '1'}
+                response = requests.post(f"{url}/api/tasks/upload", files=files, data=data)
 
             if temp_audio_path and os.path.exists(temp_audio_path):
                 os.remove(temp_audio_path)
@@ -43,8 +43,7 @@ class HFSTTClient:
 
             iteration = 0
             while True:
-                status_url = f"https://jebin2-stt.hf.space/api/files/{file_id}"
-                status_response = requests.get(status_url)
+                status_response = requests.get(f"{url}/api/tasks/{file_id}")
                 status_response.raise_for_status()
                 file_info = status_response.json()
 
@@ -59,14 +58,14 @@ class HFSTTClient:
                     logger_config.debug(f"STT API Status: {progress_text} ({progress}%) - {iteration}", overwrite=True)
 
                 if status == "completed":
-                    result = json.loads(file_info.get("caption", "{}"))
+                    result = json.loads(file_info.get("result", "{}"))
                     out_path = os.path.splitext(source_path)[0] + ".json"
                     with open(out_path, 'w') as out_f:
                         json.dump(result, out_f, indent=4)
                     return out_path
 
                 elif file_info.get("status") == "failed":
-                    logger_config.error(f"HF API STT Failed: {file_info.get('caption')}")
+                    logger_config.error(f"HF API STT Failed: {file_info.get('result')}")
                     return None
 
                 time.sleep(2)

@@ -22,7 +22,7 @@ class HFTTTClient:
             "system_prompt": system_prompt or self.system_prompt,
             "hide_from_ui": 1,
         }
-        response = requests.post(f"{self.base_url}/api/submit", json=payload)
+        response = requests.post(f"{self.base_url}/api/tasks/upload", json=payload)
         response.raise_for_status()
         task_id = response.json().get("id")
 

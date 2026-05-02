@@ -5,31 +5,29 @@ from custom_logger import logger_config
 
 class HFTTSClient:
     def __init__(self):
+        self.base_url = os.environ.get("TTS_API_URL", "https://jebin2-tts.hf.space")
         self.voice = os.environ.get("VOICE_NAME", "4")
         self.speed = os.environ.get("SPEED", "1.0")
 
     def generate_audio_segment(self, content: str, output_path: str) -> str:
         logger_config.info("Using remote HF TTS API")
         try:
-            url = "https://jebin2-tts.hf.space/api/generate"
-            payload = {
-                "text": content,
-                "voice": str(self.voice),
-                "speed": float(self.speed),
-                "hide_from_ui": 1
+            files = {'file': ('input.txt', content.encode('utf-8'), 'text/plain')}
+            data = {
+                'voice': str(self.voice),
+                'speed': float(self.speed),
+                'hide_from_ui': '1'
             }
-            logger_config.info(payload)
-            response = requests.post(url, json=payload)
+            logger_config.info(f"voice={data['voice']}, speed={data['speed']}")
+            response = requests.post(f"{self.base_url}/api/tasks/upload", files=files, data=data)
             response.raise_for_status()
             task_id = response.json().get("id")
             
             iteration = 0
-            # Poll for completion
             while True:
-                status_url = f"https://jebin2-tts.hf.space/api/files/{task_id}"
-                files_response = requests.get(status_url)
-                files_response.raise_for_status()
-                task_info = files_response.json()
+                status_response = requests.get(f"{self.base_url}/api/tasks/{task_id}")
+                status_response.raise_for_status()
+                task_info = status_response.json()
                 
                 status = task_info.get("status")
                 queue_pos = task_info.get("queue_position")
@@ -41,7 +39,7 @@ class HFTTSClient:
                     logger_config.debug(f"TTS API Status: {progress} ({progress}%) - {iteration}", overwrite=True)
 
                 if status == "completed":
-                    download_url = f"https://jebin2-tts.hf.space/api/download/{task_id}"
+                    download_url = f"{self.base_url}/api/download/{task_id}"
                     audio_response = requests.get(download_url)
                     audio_response.raise_for_status()
                     
