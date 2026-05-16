@@ -45,6 +45,45 @@ detector = SimpleNSFWDetector(threshold=0.6)
 detector.process_video("video.mp4", output_folder="nsfw_clips")
 ```
 
+## Scripts
+
+### Cloudflare Tunnel Setup
+
+Sets up a Cloudflare Tunnel to expose local services on a public domain. Supports single or multiple services under one tunnel.
+
+**Prerequisites:** `cloudflared` installed on the server and `voidall.com` (or your domain) managed on Cloudflare.
+
+```bash
+# Install cloudflared (Debian/Ubuntu)
+curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared.deb
+```
+
+**Single service:**
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash opencode.voidall.com:7860
+```
+
+**Multiple services (one tunnel, one config):**
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash opencode.voidall.com:7860 nvr.voidall.com:2126
+```
+
+**Custom tunnel name:**
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash --name myserver opencode.voidall.com:7860
+```
+
+The tunnel name defaults to the first subdomain label (e.g. `opencode` from `opencode.voidall.com`).
+
+After setup, check status with:
+```bash
+sudo systemctl status cloudflared
+journalctl -u cloudflared -f
+```
+
+---
+
 ## Modules
 
 - **jebin_lib** - Main package
