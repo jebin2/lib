@@ -61,20 +61,20 @@ sudo dpkg -i cloudflared.deb
 
 **Single service:**
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash opencode.voidall.com:7860
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash ttt.voidall.com:7860
 ```
 
 **Multiple services (one tunnel, one config):**
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash opencode.voidall.com:7860 nvr.voidall.com:2126
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash ttt.voidall.com:7860 nvr.voidall.com:2126
 ```
 
 **Custom tunnel name:**
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash --name myserver opencode.voidall.com:7860
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash --name myserver ttt.voidall.com:7860
 ```
 
-The tunnel name defaults to the first subdomain label (e.g. `opencode` from `opencode.voidall.com`).
+The tunnel name defaults to the first subdomain label (e.g. `opencode` from `ttt.voidall.com`).
 
 After setup, check status with:
 ```bash

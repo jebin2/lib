@@ -7,10 +7,10 @@ set -e
 #   bash setup_cloudflare_tunnel.sh [--name TUNNEL_NAME] hostname1:port1 [hostname2:port2 ...]
 #
 # One-liner:
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash opencode.voidall.com:7860
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash ttt.voidall.com:7860
 #
 # Multi-service:
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash opencode.voidall.com:7860 nvr.voidall.com:2126
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jebin2/lib/main/scripts/setup_cloudflare_tunnel.sh)" bash ttt.voidall.com:7860 nvr.voidall.com:2126
 #
 # Optional --name overrides the auto-derived tunnel name (defaults to first subdomain label).
 
@@ -38,16 +38,16 @@ if [[ ${#SERVICES[@]} -eq 0 ]]; then
     echo "  bash $0 [--name TUNNEL_NAME] hostname1:port1 [hostname2:port2 ...]"
     echo ""
     echo "Examples:"
-    echo "  bash $0 opencode.voidall.com:7860"
-    echo "  bash $0 opencode.voidall.com:7860 nvr.voidall.com:2126"
-    echo "  bash $0 --name myserver opencode.voidall.com:7860"
+    echo "  bash $0 ttt.voidall.com:7860"
+    echo "  bash $0 ttt.voidall.com:7860 nvr.voidall.com:2126"
+    echo "  bash $0 --name myserver ttt.voidall.com:7860"
     exit 1
 fi
 
 # Validate each service is in hostname:port format
 for svc in "${SERVICES[@]}"; do
     if [[ "$svc" != *:* ]]; then
-        echo "❌ Invalid format '$svc' — expected hostname:port (e.g. opencode.voidall.com:7860)"
+        echo "❌ Invalid format '$svc' — expected hostname:port (e.g. ttt.voidall.com:7860)"
         exit 1
     fi
 done
